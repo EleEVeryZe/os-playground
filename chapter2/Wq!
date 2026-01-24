@@ -1,0 +1,324 @@
+[4mwait[24m(2)                                                             System Calls Manual                                                             [4mwait[24m(2)
+
+[1mNAME[0m
+       wait, waitpid, waitid - wait for process to change state
+
+[1mLIBRARY[0m
+       Standard C library ([4mlibc[24m, [4m-lc[24m)
+
+[1mSYNOPSIS[0m
+       [1m#include <sys/wait.h>[0m
+
+       [1mpid_t wait(int *_Nullable [4m[22mwstatus[24m[1m);[0m
+       [1mpid_t waitpid(pid_t [4m[22mpid[24m[1m, int *_Nullable [4m[22mwstatus[24m[1m, int [4m[22moptions[24m[1m);[0m
+
+       [1mint waitid(idtype_t [4m[22midtype[24m[1m, id_t [4m[22mid[24m[1m, siginfo_t *[4m[22minfop[24m[1m, int [4m[22moptions[24m[1m);[0m
+                       /* This is the glibc and POSIX interface; see
+                          NOTES for information on the raw system call. */
+
+   Feature Test Macro Requirements for glibc (see [1mfeature_test_macros[22m(7)):
+
+       [1mwaitid[22m():
+           Since glibc 2.26:
+               _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200809L
+           glibc 2.25 and earlier:
+               _XOPEN_SOURCE
+                   || /* Since glibc 2.12: */ _POSIX_C_SOURCE >= 200809L
+                   || /* glibc <= 2.19: */ _BSD_SOURCE
+
+[1mDESCRIPTION[0m
+       All  of  these system calls are used to wait for state changes in a child of the calling process, and obtain information about the child whose state
+       has changed.  A state change is considered to be: the child terminated; the child was stopped by a signal; or the child was resumed by a signal.  In
+       the case of a terminated child, performing a wait allows the system to release the resources associated with the child; if a wait is not  performed,
+       then the terminated child remains in a "zombie" state (see NOTES below).
+
+       If  a  child  has  already changed state, then these calls return immediately.  Otherwise, they block until either a child changes state or a signal
+       handler interrupts the call (assuming that system calls are not automatically restarted using the [1mSA_RESTART [22mflag of [1msigaction[22m(2)).  In the  remain‐
+       der of this page, a child whose state has changed and which has not yet been waited upon by one of these system calls is termed [4mwaitable[24m.
+
+   [1mwait() and waitpid()[0m
+       The [1mwait[22m() system call suspends execution of the calling thread until one of its children terminates.  The call [4mwait(&wstatus)[24m is equivalent to:
+
+           waitpid(-1, &wstatus, 0);
+
+       The [1mwaitpid[22m() system call suspends execution of the calling thread until a child specified by [4mpid[24m argument has changed state.  By default, [1mwaitpid[22m()
+       waits only for terminated children, but this behavior is modifiable via the [4moptions[24m argument, as described below.
+
+       The value of [4mpid[24m can be:
+
+       < [1m-1   [22mmeaning wait for any child process whose process group ID is equal to the absolute value of [4mpid[24m.
+
+       [1m-1     [22mmeaning wait for any child process.
+
+       [1m0      [22mmeaning wait for any child process whose process group ID is equal to that of the calling process at the time of the call to [1mwaitpid[22m().
+
+       > [1m0    [22mmeaning wait for the child whose process ID is equal to the value of [4mpid[24m.
+
+       The value of [4moptions[24m is an OR of zero or more of the following constants:
+
+       [1mWNOHANG[0m
+              return immediately if no child has exited.
+
+       [1mWUNTRACED[0m
+              also  return  if  a child has stopped (but not traced via [1mptrace[22m(2)).  Status for [4mtraced[24m children which have stopped is provided even if this
+              option is not specified.
+
+       [1mWCONTINUED [22m(since Linux 2.6.10)
+              also return if a stopped child has been resumed by delivery of [1mSIGCONT[22m.
+
+       (For Linux-only options, see below.)
+
+       If [4mwstatus[24m is not NULL, [1mwait[22m() and [1mwaitpid[22m() store status information in the [4mint[24m to which it points.  This integer can be inspected with the follow‐
+       ing macros (which take the integer itself as an argument, not a pointer to it, as is done in [1mwait[22m() and [1mwaitpid[22m()!):
+
+       [1mWIFEXITED([4m[22mwstatus[24m[1m)[0m
+              returns true if the child terminated normally, that is, by calling [1mexit[22m(3) or [1m_exit[22m(2), or by returning from main().
+
+       [1mWEXITSTATUS([4m[22mwstatus[24m[1m)[0m
+              returns the exit status of the child.  This consists of the least significant 8 bits of the [4mstatus[24m argument that the  child  specified  in  a
+              call  to  [1mexit[22m(3)  or [1m_exit[22m(2) or as the argument for a return statement in main().  This macro should be employed only if [1mWIFEXITED [22mreturned
+              true.
+
+       [1mWIFSIGNALED([4m[22mwstatus[24m[1m)[0m
+              returns true if the child process was terminated by a signal.
+
+       [1mWTERMSIG([4m[22mwstatus[24m[1m)[0m
+              returns the number of the signal that caused the child process to terminate.  This macro should be  employed  only  if  [1mWIFSIGNALED  [22mreturned
+              true.
+
+       [1mWCOREDUMP([4m[22mwstatus[24m[1m)[0m
+              returns true if the child produced a core dump (see [1mcore[22m(5)).  This macro should be employed only if [1mWIFSIGNALED [22mreturned true.
+
+              This macro is not specified in POSIX.1-2001 and is not available on some UNIX implementations (e.g., AIX, SunOS).  Therefore, enclose its use
+              inside [4m#ifdef[24m [4mWCOREDUMP[24m [4m...[24m [4m#endif[24m.
+
+       [1mWIFSTOPPED([4m[22mwstatus[24m[1m)[0m
+              returns true if the child process was stopped by delivery of a signal; this is possible only if the call was done using [1mWUNTRACED [22mor when the
+              child is being traced (see [1mptrace[22m(2)).
+
+       [1mWSTOPSIG([4m[22mwstatus[24m[1m)[0m
+              returns the number of the signal which caused the child to stop.  This macro should be employed only if [1mWIFSTOPPED [22mreturned true.
+
+       [1mWIFCONTINUED([4m[22mwstatus[24m[1m)[0m
+              (since Linux 2.6.10) returns true if the child process was resumed by delivery of [1mSIGCONT[22m.
+
+   [1mwaitid()[0m
+       The [1mwaitid[22m() system call (available since Linux 2.6.9) provides more precise control over which child state changes to wait for.
+
+       The [4midtype[24m and [4mid[24m arguments select the child(ren) to wait for, as follows:
+
+       [4midtype[24m == [1mP_PID[0m
+              Wait for the child whose process ID matches [4mid[24m.
+
+       [4midtype[24m == [1mP_PIDFD [22m(since Linux 5.4)
+              Wait  for  the child referred to by the PID file descriptor specified in [4mid[24m.  (See [1mpidfd_open[22m(2) for further information on PID file descrip‐
+              tors.)
+
+       [4midtype[24m == [1mP_PGID[0m
+              Wait for any child whose process group ID matches [4mid[24m.  Since Linux 5.4, if [4mid[24m is zero, then wait for any child that is in  the  same  process
+              group as the caller's process group at the time of the call.
+
+       [4midtype[24m == [1mP_ALL[0m
+              Wait for any child; [4mid[24m is ignored.
+
+       The child state changes to wait for are specified by ORing one or more of the following flags in [4moptions[24m:
+
+       [1mWEXITED[0m
+              Wait for children that have terminated.
+
+       [1mWSTOPPED[0m
+              Wait for children that have been stopped by delivery of a signal.
+
+       [1mWCONTINUED[0m
+              Wait for (previously stopped) children that have been resumed by delivery of [1mSIGCONT[22m.
+
+       The following flags may additionally be ORed in [4moptions[24m:
+
+       [1mWNOHANG[0m
+              As for [1mwaitpid[22m().
+
+       [1mWNOWAIT[0m
+              Leave the child in a waitable state; a later wait call can be used to again retrieve the child status information.
+
+       Upon successful return, [1mwaitid[22m() fills in the following fields of the [4msiginfo_t[24m structure pointed to by [4minfop[24m:
+
+       [4msi_pid[24m The process ID of the child.
+
+       [4msi_uid[24m The real user ID of the child.  (This field is not set on most other implementations.)
+
+       [4msi_signo[0m
+              Always set to [1mSIGCHLD[22m.
+
+       [4msi_status[0m
+              Either  the exit status of the child, as given to [1m_exit[22m(2) (or [1mexit[22m(3)), or the signal that caused the child to terminate, stop, or continue.
+              The [4msi_code[24m field can be used to determine how to interpret this field.
+
+       [4msi_code[0m
+              Set to one of: [1mCLD_EXITED [22m(child called [1m_exit[22m(2)); [1mCLD_KILLED [22m(child killed by signal); [1mCLD_DUMPED [22m(child killed by signal, and dumped core);
+              [1mCLD_STOPPED [22m(child stopped by signal); [1mCLD_TRAPPED [22m(traced child has trapped); or [1mCLD_CONTINUED [22m(child continued by [1mSIGCONT[22m).
+
+       If [1mWNOHANG [22mwas specified in [4moptions[24m and there were no children in a waitable state, then [1mwaitid[22m() returns 0 immediately and the state  of  the  [4msig‐[0m
+       [4minfo_t[24m  structure  pointed to by [4minfop[24m depends on the implementation.  To (portably) distinguish this case from that where a child was in a waitable
+       state, zero out the [4msi_pid[24m field before the call and check for a nonzero value in this field after the call returns.
+
+       POSIX.1-2008 Technical Corrigendum 1 (2013) adds the requirement that when [1mWNOHANG [22mis specified in [4moptions[24m and there were no children in a  waitable
+       state,  then  [1mwaitid[22m()  should zero out the [4msi_pid[24m and [4msi_signo[24m fields of the structure.  On Linux and other implementations that adhere to this re‐
+       quirement, it is not necessary to zero out the [4msi_pid[24m field before calling [1mwaitid[22m().  However, not all implementations follow the POSIX.1 specifica‐
+       tion on this point.
+
+[1mRETURN VALUE[0m
+       [1mwait[22m(): on success, returns the process ID of the terminated child; on failure, -1 is returned.
+
+       [1mwaitpid[22m(): on success, returns the process ID of the child whose state has changed; if [1mWNOHANG [22mwas specified and one or more child(ren) specified by
+       [4mpid[24m exist, but have not yet changed state, then 0 is returned.  On failure, -1 is returned.
+
+       [1mwaitid[22m(): returns 0 on success or if [1mWNOHANG [22mwas specified and no child(ren) specified by [4mid[24m has yet changed state; on failure, -1 is returned.
+
+       On failure, each of these calls sets [4merrno[24m to indicate the error.
+
+[1mERRORS[0m
+       [1mEAGAIN [22mThe PID file descriptor specified in [4mid[24m is nonblocking and the process that it refers to has not terminated.
+
+       [1mECHILD [22m(for [1mwait[22m()) The calling process does not have any unwaited-for children.
+
+       [1mECHILD [22m(for [1mwaitpid[22m() or [1mwaitid[22m()) The process specified by [4mpid[24m ([1mwaitpid[22m()) or [4midtype[24m and [4mid[24m ([1mwaitid[22m()) does not exist or is  not  a  child  of  the
+              calling  process.   (This can happen for one's own child if the action for [1mSIGCHLD [22mis set to [1mSIG_IGN[22m.  See also the [4mLinux[24m [4mNotes[24m section about
+              threads.)
+
+       [1mEINTR  WNOHANG [22mwas not set and an unblocked signal or a [1mSIGCHLD [22mwas caught; see [1msignal[22m(7).
+
+       [1mEINVAL [22mThe [4moptions[24m argument was invalid.
+
+       [1mESRCH  [22m(for [1mwait[22m() or [1mwaitpid[22m()) [4mpid[24m is equal to [1mINT_MIN[22m.
+
+[1mVERSIONS[0m
+   [1mC library/kernel differences[0m
+       [1mwait[22m() is actually a library function that (in glibc) is implemented as a call to [1mwait4[22m(2).
+
+       On some architectures, there is no [1mwaitpid[22m() system call; instead, this interface is implemented  via  a  C  library  wrapper  function  that  calls
+       [1mwait4[22m(2).
+
+       The  raw [1mwaitid[22m() system call takes a fifth argument, of type [4mstruct[24m [4mrusage[24m [4m*[24m.  If this argument is non-NULL, then it is used to return resource us‐
+       age information about the child, in the same manner as [1mwait4[22m(2).  See [1mgetrusage[22m(2) for details.
+
+[1mSTANDARDS[0m
+       POSIX.1-2008.
+
+[1mHISTORY[0m
+       SVr4, 4.3BSD, POSIX.1-2001.
+
+[1mNOTES[0m
+       A child that terminates, but has not been waited for becomes a "zombie".  The kernel maintains a minimal set of information about the zombie process
+       (PID, termination status, resource usage information) in order to allow the parent to later perform a wait to obtain information  about  the  child.
+       As  long as a zombie is not removed from the system via a wait, it will consume a slot in the kernel process table, and if this table fills, it will
+       not be possible to create further processes.  If a parent process terminates, then its "zombie" children (if any) are adopted by [1minit[22m(1), (or by the
+       nearest "subreaper" process as defined through the use of the [1mprctl[22m(2) [1mPR_SET_CHILD_SUBREAPER [22moperation); [1minit[22m(1) automatically performs a  wait  to
+       remove the zombies.
+
+       POSIX.1-2001  specifies  that  if  the disposition of [1mSIGCHLD [22mis set to [1mSIG_IGN [22mor the [1mSA_NOCLDWAIT [22mflag is set for [1mSIGCHLD [22m(see [1msigaction[22m(2)), then
+       children that terminate do not become zombies and a call to [1mwait[22m() or [1mwaitpid[22m() will block until all children have terminated, and  then  fail  with
+       [4merrno[24m  set  to [1mECHILD[22m.  (The original POSIX standard left the behavior of setting [1mSIGCHLD [22mto [1mSIG_IGN [22munspecified.  Note that even though the default
+       disposition of [1mSIGCHLD [22mis "ignore", explicitly setting the disposition to [1mSIG_IGN [22mresults in different treatment of zombie process children.)
+
+       Linux 2.6 conforms to the POSIX requirements.  However, Linux 2.4 (and earlier) does not: if a [1mwait[22m() or [1mwaitpid[22m() call is made while [1mSIGCHLD [22mis be‐
+       ing ignored, the call behaves just as though [1mSIGCHLD [22mwere not being ignored, that is, the call blocks until the next child terminates and  then  re‐
+       turns the process ID and status of that child.
+
+   [1mLinux notes[0m
+       In  the  Linux  kernel, a kernel-scheduled thread is not a distinct construct from a process.  Instead, a thread is simply a process that is created
+       using the Linux-unique [1mclone[22m(2) system call; other routines such as the portable [1mpthread_create[22m(3) call  are  implemented  using  [1mclone[22m(2).   Before
+       Linux  2.4,  a  thread  was just a special case of a process, and as a consequence one thread could not wait on the children of another thread, even
+       when the latter belongs to the same thread group.  However, POSIX prescribes such functionality, and since Linux 2.4 a thread can,  and  by  default
+       will, wait on children of other threads in the same thread group.
+
+       The following Linux-specific [4moptions[24m are for use with children created using [1mclone[22m(2); they can also, since Linux 4.7, be used with [1mwaitid[22m():
+
+       [1m__WCLONE[0m
+              Wait for "clone" children only.  If omitted, then wait for "non-clone" children only.  (A "clone" child is one which delivers no signal, or a
+              signal other than [1mSIGCHLD [22mto its parent upon termination.)  This option is ignored if [1m__WALL [22mis also specified.
+
+       [1m__WALL [22m(since Linux 2.4)
+              Wait for all children, regardless of type ("clone" or "non-clone").
+
+       [1m__WNOTHREAD [22m(since Linux 2.4)
+              Do not wait for children of other threads in the same thread group.  This was the default before Linux 2.4.
+
+       Since Linux 4.7, the [1m__WALL [22mflag is automatically implied if the child is being ptraced.
+
+[1mBUGS[0m
+       According  to  POSIX.1-2008,  an  application  calling  [1mwaitid[22m() must ensure that [4minfop[24m points to a [4msiginfo_t[24m structure (i.e., that it is a non-null
+       pointer).  On Linux, if [4minfop[24m is NULL, [1mwaitid[22m() succeeds, and returns the process ID of the waited-for child.  Applications should avoid relying  on
+       this inconsistent, nonstandard, and unnecessary feature.
+
+[1mEXAMPLES[0m
+       The  following program demonstrates the use of [1mfork[22m(2) and [1mwaitpid[22m().  The program creates a child process.  If no command-line argument is supplied
+       to the program, then the child suspends its execution using [1mpause[22m(2), to allow the user to send signals to the child.  Otherwise, if a  command-line
+       argument  is supplied, then the child exits immediately, using the integer supplied on the command line as the exit status.  The parent process exe‐
+       cutes a loop that monitors the child using [1mwaitpid[22m(), and uses the W*() macros described above to analyze the wait status value.
+
+       The following shell session demonstrates the use of the program:
+
+           $ [1m./a.out &[0m
+           Child PID is 32360
+           [1] 32359
+           $ [1mkill -STOP 32360[0m
+           stopped by signal 19
+           $ [1mkill -CONT 32360[0m
+           continued
+           $ [1mkill -TERM 32360[0m
+           killed by signal 15
+           [1]+  Done                    ./a.out
+           $
+
+   [1mProgram source[0m
+
+       #include <stdint.h>
+       #include <stdio.h>
+       #include <stdlib.h>
+       #include <sys/wait.h>
+       #include <unistd.h>
+
+       int
+       main(int argc, char *argv[])
+       {
+           int    wstatus;
+           pid_t  cpid, w;
+
+           cpid = fork();
+           if (cpid == -1) {
+               perror("fork");
+               exit(EXIT_FAILURE);
+           }
+
+           if (cpid == 0) {            /* Code executed by child */
+               printf("Child PID is %jd\n", (intmax_t) getpid());
+               if (argc == 1)
+                   pause();                    /* Wait for signals */
+               _exit(atoi(argv[1]));
+
+           } else {                    /* Code executed by parent */
+               do {
+                   w = waitpid(cpid, &wstatus, WUNTRACED | WCONTINUED);
+                   if (w == -1) {
+                       perror("waitpid");
+                       exit(EXIT_FAILURE);
+                   }
+
+                   if (WIFEXITED(wstatus)) {
+                       printf("exited, status=%d\n", WEXITSTATUS(wstatus));
+                   } else if (WIFSIGNALED(wstatus)) {
+                       printf("killed by signal %d\n", WTERMSIG(wstatus));
+                   } else if (WIFSTOPPED(wstatus)) {
+                       printf("stopped by signal %d\n", WSTOPSIG(wstatus));
+                   } else if (WIFCONTINUED(wstatus)) {
+                       printf("continued\n");
+                   }
+               } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
+               exit(EXIT_SUCCESS);
+           }
+       }
+
+[1mSEE ALSO[0m
+       [1m_exit[22m(2), [1mclone[22m(2), [1mfork[22m(2), [1mkill[22m(2), [1mptrace[22m(2), [1msigaction[22m(2), [1msignal[22m(2), [1mwait4[22m(2), [1mpthread_create[22m(3), [1mcore[22m(5), [1mcredentials[22m(7), [1msignal[22m(7)
+
+Linux man-pages 6.7                                                      2023-10-31                                                                 [4mwait[24m(2)
