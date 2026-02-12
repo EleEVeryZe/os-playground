@@ -21,6 +21,10 @@ int main() {
     aluno->nota = 10;
     strcpy(aluno->nome, myName);
     
+    aluno->nota = 10;
+    strcpy(aluno->nome, myName);
+
+    aluno->nota = 10;
     printf("Hi. My name is %s, and I scored %d in math test\n", aluno->nome, aluno->nota);
     
     free(aluno->nome);
