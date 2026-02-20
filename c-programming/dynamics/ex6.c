@@ -5,21 +5,30 @@
 Matriz Dinâmica (Linha Única): Aloque uma matriz $M \times N$ como um único bloco de memória e acesse os elementos via ptr[i * N + j].
 */
 
-int *matrix(int n, int m) {     
-    
-    int n2 = n;
-    int m2 = m;
-    int (*matrix)[n] = malloc(sizeof(int) * n * m);
-    int *start[n] = &matrix;
-    while (n) {
-        while (m) {
-            scanf("%d", &matrix[m--][n--]);
-        }
-    }
+int matrix(int m, int n) {
 
-    while (n2--)
-        while (m2--)
-            printf("%d", start[m2--][n2--]);
+    int **matrix = (int **) malloc(m * sizeof(int*));
+
+    for (int i = 0; i < m; i++)
+    {
+       
+        *(matrix + i) = (int *) malloc((n+1) * sizeof(int));
+       for (int j = 0; j < n; j++)
+       {
+            printf("Provide the element [%d, %d]: ", i, j);
+            scanf("%d", (*(matrix + i) + j));
+            printf("\n");
+       }
+    }
+    
+    for (int i = 0; i < m; i++)
+    {
+       for (int j = 0; j < n; j++)
+       {
+            printf("%d\n", *(*(matrix + i) + j));
+       }
+    }
+ 
 }
 
 int main() {

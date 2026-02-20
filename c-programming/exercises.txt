@@ -1,6 +1,6 @@
 Nível 1: O Básico de Ponteiros
 Exercícios para entender endereços e desreferenciação.
-	1. Troca de Valores: Crie uma função swap(int *a, int *b) que troca os valores de duas variáveis.
+	
 	2. Impressão de Endereço: Declare uma variável e um ponteiro para ela. Imprima o valor da variável, o endereço dela e o valor armazenado no ponteiro.
 	3. Aritmética Simples: Crie um array de 5 inteiros. Use um ponteiro para percorrer o array e imprimir os valores sem usar colchetes [].
 	4. Soma com Ponteiros: Escreva uma função que receba dois números via ponteiros e retorne a soma deles.
