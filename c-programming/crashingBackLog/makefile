@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g -Wall
-CLIENT = p1
-SERVER = p2
+CLIENT = client 
+SERVER = server
 CLIENT_SRC = client.c
 SERVER_SRC = server.c
 
