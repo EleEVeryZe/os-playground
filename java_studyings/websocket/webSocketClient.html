@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw Java Chatroom</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        #chat-container { width: 400px; background: white; border-radius: 8px; shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; height: 500px; border: 1px solid #ccc; }
+        #messages { flex: 1; padding: 15px; overflow-y: auto; border-bottom: 1px solid #eee; }
+        .msg { margin-bottom: 10px; padding: 8px 12px; border-radius: 18px; background: #e4e6eb; width: fit-content; max-width: 80%; }
+        .msg.self { background: #0084ff; color: white; align-self: flex-end; margin-left: auto; }
+        #input-area { padding: 10px; display: flex; gap: 10px; }
+        input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
+        button { background: #0084ff; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+        button:hover { background: #0073e6; }
+        #status { font-size: 12px; padding: 5px 15px; color: gray; }
+    </style>
+</head>
+<body>
+
+<div id="chat-container">
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+    <div id="input-area">
+        <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+    const messageContainer = document.getElementById('messages');
+    const statusLabel = document.getElementById('status');
+    const input = document.getElementById('userInput');
+
+    // 1. Initialize Connection
+    const socket = new WebSocket('ws://localhost:8080');
+
+    socket.onopen = () => {
+        statusLabel.innerText = "Connected to Java Server";
+        statusLabel.style.color = "green";
+    };
+
+    socket.onclose = () => {
+        statusLabel.innerText = "Disconnected";
+        statusLabel.style.color = "red";
+    };
+
+    socket.onerror = (err) => {
+        console.error("WebSocket Error:", err);
+    };
+
+    // 2. Handle Incoming Messages
+    socket.onmessage = (event) => {
+        appendMessage(event.data, false);
+    };
+
+    // 3. Send Messages
+    function sendMessage() {
+        const text = input.value.trim();
+        if (text && socket.readyState === WebSocket.OPEN) {
+            socket.send(text);
+            appendMessage(text, true); // Show our own message
+            input.value = '';
+        }
+    }
+
+    function appendMessage(text, isSelf) {
+        const div = document.createElement('div');
+        div.classList.add('msg');
+        if (isSelf) div.classList.add('self');
+        div.innerText = text;
+        messageContainer.appendChild(div);
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+
+    // Allow "Enter" key to send
+    input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+    });
+</script>
+
+</body>
+</html>
