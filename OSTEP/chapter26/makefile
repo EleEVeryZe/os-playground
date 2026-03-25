@@ -1,14 +1,15 @@
 CC = gcc
 CFLAGS = -g -Wall
 TARGET = p1
-FILE = ex2.c
+FILE = ex3.c
 
 .PHONY: all clean leak run
 
 all: $(TARGET)
 
 $(TARGET): $(FILE)
-	$(CC) $(CFLAGS) -o $(TARGET) $(FILE) -lpthread
+	$(CC) $(CFLAGS) -o $(TARGET) $(FILE) -lpthread -lm
+
 
 clean:
 	rm -f $(TARGET)
