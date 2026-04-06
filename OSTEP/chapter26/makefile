@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g -Wall
 TARGET = p1
-FILE = ex4.c
+FILE = ex6.c
 
 .PHONY: all clean leak run
 

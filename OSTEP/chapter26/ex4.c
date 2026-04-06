@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
+
 /*
 The Goal: Learn thread communication using Condition Variables.
 
@@ -21,21 +22,21 @@ bool isFull = false;
 
 typedef struct
 {
-    int *arr;
-    int *arrIdx;
+    int *arr2;
+    int *poops;
 } SharedArr;
 
 void fillArr(void *sharedArr)
 {
     printf("\nStart fillArr");
     int i = 0;
-    int *arr = ((SharedArr *)sharedArr)->arr;
-    int *arrIdx = ((SharedArr *)sharedArr)->arrIdx;
+    int *arr2 = ((SharedArr *)sharedArr)->arr2;
+    int *poops = ((SharedArr *)sharedArr)->poops;
     while (i < 30)
     {
-        printf("\nvalueof arrIdx: %d\n", *arrIdx);
+        printf("\nvalueof poops: %d\n", *poops);
         pthread_mutex_lock(&lock);
-        while (*arrIdx == 5)
+        while (*poops == 5)
         {
             pthread_cond_signal(&cond);
             pthread_cond_wait(&cond, &lock);
@@ -44,9 +45,9 @@ void fillArr(void *sharedArr)
         int rndm = rand() % 100;
 
         printf("\n[%d] - New Random Value: %d", i, rndm);
-        *(arr + *arrIdx) = rndm;
+        *(arr2 + *poops) = rndm;
 
-        (*arrIdx)++;
+        (*poops)++;
 
         pthread_mutex_unlock(&lock);
         i++;
@@ -57,22 +58,22 @@ void emptyArr(void *sharedArr)
 {
     printf("\nStart emptyArr\n");
     int i = 0;
-    int *arr = ((SharedArr *)sharedArr)->arr;
-    int *arrIdx = ((SharedArr *)sharedArr)->arrIdx;
+    int *arr2 = ((SharedArr *)sharedArr)->arr2;
+    int *poops = ((SharedArr *)sharedArr)->poops;
 
     while (i < 30)
     {
-        printf("\nvalueof arrIdx: %d\n", *arrIdx);
+        printf("\nvalueof poops: %d\n", *poops);
         pthread_mutex_lock(&lock);
-        while (*arrIdx == 0)
+        while (*poops == 0)
         {
             pthread_cond_signal(&cond);
             pthread_cond_wait(&cond, &lock);
         }
-        printf("\n[%d] - Removed item: %d", i, *(arr + *arrIdx - 1));
-        *(arr + *arrIdx) = -1;
+        printf("\n[%d] - Removed item: %d", i, *(arr2 + *poops - 1));
+        *(arr2 + *poops) = -1;
 
-        (*arrIdx)--;
+        (*poops)--;
 
         pthread_mutex_unlock(&lock);
         i++;
@@ -83,10 +84,10 @@ int main()
 {
     srand(time(NULL));
     printf("Start of program...\n");
-    int *arr = malloc(sizeof(int) * 5);
+    int *arr2 = malloc( sizeof(int) * 5);
     pthread_t prod, cons;
-    int *arrIdx = malloc(sizeof(int));
-    SharedArr sArr = {arr, arrIdx};
+    int *poops = malloc(sizeof(int));
+    SharedArr sArr = {arr2, poops};
 
     if (pthread_create(&prod, NULL, fillArr, &sArr) != 0)
     {
@@ -101,6 +102,6 @@ int main()
     pthread_join(prod, NULL);
     pthread_join(cons, NULL);
 
-    free(arr);
-    free(arrIdx);
+    free(arr2);
+    free(poops);
 }

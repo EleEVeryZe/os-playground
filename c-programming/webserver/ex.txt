@@ -1,0 +1,54 @@
+1. Warm-up: The Thread-Safe "Atomic" Counter
+Before jumping into networking, ensure your synchronization fundamentals are solid.
+
+The Task: Create a program where 100 threads increment a single global int variable 1,000,000 times each.
+
+Version A (The Race): Run it without locks. Observe the final value (it won't be 100 million).
+
+Version B (The Lock): Use pthread_mutex_t to protect the increment. Notice the performance hit.
+
+Version C (The Atomic): Use C11 stdatomic.h or GCC built-in __sync_fetch_and_add. Compare the speed to Version B.
+
+2. Networking: The "Heartbeat" Monitor
+This bridges Beej's socket basics with OSTEP's process/thread management.
+
+The Task: Write a "Watcher" server and multiple "Client" nodes.
+
+The Logic: Each client connects to the server and sends a "HEARTBEAT" string every 2 seconds.
+
+The Challenge: The server must use one thread per client (or poll()/select() if you want to be fancy) to track these. If the server doesn’t hear from a client for 5 seconds, it must print: [WARNING] Client <IP> has gone offline!
+
+OSTEP Concept: Thread creation and cleanup (pthread_detach or pthread_join).
+
+3. The "Producer-Consumer" Web Proxy
+This is a classic systems programming interview question and a core OSTEP project.
+
+The Task: Build a small proxy server that sits between a user and a website.
+
+The Architecture:
+
+Listener Thread: Accepts incoming socket connections and puts the file descriptors into a Bounded Buffer (a fixed-size array).
+
+Worker Pool: A fixed set of threads (e.g., 4 threads) that wait for a descriptor to appear in the buffer, grab it, and handle the HTTP request.
+
+The Constraint: You must use pthread_cond_wait and pthread_cond_signal to manage the buffer. Do not "busy wait."
+
+4. The "Distributed" Grep (Capstone Project)
+This combines everything: Sockets, Threads, and Mutexes.
+
+The Task: Create a system that searches for a string across multiple text files stored on different machines.
+
+The Setup:
+
+Worker Nodes: Stay open on a port. When they receive a string, they search their local directory and return the line numbers/text.
+
+Master Node: Takes a search string from the user, connects to all Worker Nodes concurrently (one thread per connection), collects the results, and merges them into a single sorted output.
+
+The Twist: Use a mutex on the Master Node to ensure that when worker threads return data, they don't garble the final output file by writing to it simultaneously.
+
+Pro-Tips for Debugging
+Valgrind is your god: Use valgrind --tool=helgrind ./your_program to find race conditions you didn't even know you had.
+
+Beej's poll() vs OSTEP's Threads: Try rewriting Exercise 2 using poll() (Single-threaded I/O multiplexing) instead of threads. It's a great way to understand how Nginx works vs. how older versions of Apache worked.
+
+Check Return Codes: In systems programming, malloc, socket, bind, and pthread_create can all fail. If you don't check if (rc < 0), you will spend hours chasing segfaults.
