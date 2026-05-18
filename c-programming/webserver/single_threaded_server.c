@@ -43,7 +43,7 @@ int main()
     int server_fd;
     struct sockaddr_in address;
     int addrlen = sizeof(address);
-    char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello World!";
+    //char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello World!";
 
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {

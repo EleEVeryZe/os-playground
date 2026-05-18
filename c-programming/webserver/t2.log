@@ -1,0 +1,71 @@
+Servidor rodando na porta 8082...
+New connection on father socket[4]
+New connection on father socket[5]
+Client says GET / HTTP/1.1
+Host: localhost:8082
+User-Agent: curl/8.5.0
+Accept: */*
+
+082New connection on father socket[6]
+Client says GET / HTTP/1.1
+Host: localhost:8082
+User-Agent: curl/8.5.0
+Accept: */*
+
+082New connection on father socket[7]
+Host disconnected, fd 4
+Client says GET / HTTP/1.1
+Host: localhost:8082
+User-Agent: curl/8.5.0
+Accept: */*
+
+082New connection on father socket[4]
+Host disconnected, fd 5
+Client says GET / HTTP/1.1
+Host: localhost:8082
+User-Agent: curl/8.5.0
+Accept: */*
+
+082New connection on father socket[5]
+Client says GET / HTTP/1.1
+Host: localhost:8082
+User-Agent: curl/8.5.0
+Accept: */*
+
+082Host disconnected, fd 6
+New connection on father socket[6]
+Host disconnected, fd 4
+Client says GET / HTTP/1.1
+Host: localhost:8082
+User-Agent: curl/8.5.0
+Accept: */*
+
+082Host disconnected, fd 7
+New connection on father socket[4]
+Host disconnected, fd 5
+Client says GET / HTTP/1.1
+Host: localhost:8082
+User-Agent: curl/8.5.0
+Accept: */*
+
+082New connection on father socket[5]
+Client says GET / HTTP/1.1
+Host: localhost:8082
+User-Agent: curl/8.5.0
+Accept: */*
+
+082New connection on father socket[7]
+Client says GET / HTTP/1.1
+Host: localhost:8082
+User-Agent: curl/8.5.0
+Accept: */*
+
+082Host disconnected, fd 6
+Host disconnected, fd 4
+Host disconnected, fd 5
+Client says GET / HTTP/1.1
+Host: localhost:8082
+User-Agent: curl/8.5.0
+Accept: */*
+
+082Host disconnected, fd 7

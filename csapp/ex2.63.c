@@ -28,28 +28,40 @@ void print_bits(unsigned val)
     printf("\n");
 }
 
-/*Perform shift arithmetically */
+/* Perform shift logically */
 unsigned srl(unsigned x, int k)
 {
     unsigned xsra = (int)x >> k;
-    // continues
-    return xsra;
+    short wordInBit = sizeof(int) * 8;
+    unsigned mask = -1;
+    if (k > 0  && !!((unsigned)x >> wordInBit - 1))
+        mask = (unsigned)-1 << (wordInBit - k);
+
+    print_bits(mask);
+    print_bits(xsra);
+    return xsra ^ mask;
 }
 
-/* Perform shift logically */
+/*Perform shift arithmetically */
 int sra(int x, int k)
 {
+    short wordInBit = sizeof(int) * 8;
     int xsrl = (unsigned)x >> k;
-    unsigned mask = ~((unsigned)-1 << 31 - 0);
+    unsigned mask = 0;
+
+    if (k > 0 && !!((unsigned)x >> wordInBit - 1))
+        mask = (unsigned)-1 << (wordInBit - k);
+
     print_bits(mask);
-    return xsrl ;
+    print_bits(xsrl);
+    return xsrl | mask;
 }
 
 int main()
 {
-    int original = -1;
+    int original = 16;
 
     printf("Init ");
     print_bits(original);
-    print_bits(sra(-1, 1));
+    print_bits(srl(original, 1));
 }

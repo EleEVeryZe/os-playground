@@ -7,18 +7,28 @@
 Redimensionamento com Realloc: Aloque um array de 5 posições, preencha-o e depois use realloc para aumentar para 10.
 */
 
-int main() {
+int main()
+{
+    printf("Hex: [%.2x]\nChar: [%c]\nDecimal: [%d]\n", 'A', 'A', 'A');
+    int x = 0x40;
+    printf("X: [%c]", x);
+    //doExec();
+}
+
+void doExec()
+{
     char *arr = malloc(sizeof(char) * 8);
     strcpy(arr, "Rodolfo");
 
     printf("%s", arr);
-    
+
     char *temp;
-    if ((temp = realloc(arr, 20)) == NULL) return NULL;
+    if ((temp = realloc(arr, 20)) == NULL)
+        return NULL;
 
     arr = temp;
-    free(temp);  
-    
+    free(temp);
+
     strcpy(arr, "Rodolfo Elizer");
 
     printf("%s", arr);
